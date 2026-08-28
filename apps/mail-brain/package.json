@@ -1,0 +1,27 @@
+{
+  "name": "@sv/mail-brain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "test:pipeline": "dotenv -e ../../.env -- tsx src/index.ts --test",
+    "once": "dotenv -e ../../.env -- tsx src/index.ts --once",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sv/core": "workspace:*",
+    "@sv/db": "workspace:*",
+    "@slack/web-api": "^7.8.0",
+    "imapflow": "^1.0.164",
+    "mailparser": "^3.7.1",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.4.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

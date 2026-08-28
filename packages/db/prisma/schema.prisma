@@ -1,0 +1,239 @@
+// SV-Platform database schema — the single source of truth that replaces the
+// Google-Drive sync, the termine.txt file and the Firestore tasks collection.
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (NextAuth v5 / @auth/prisma-adapter) ───────────────────────────────
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  role          Role      @default(MEMBER)
+  permissions   String[]  @default([]) // fine-grained member capabilities, e.g. "mails", "dokumente"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  uploadedProtocols Protocol[]           @relation("UploadedBy")
+  handledRequests   DriveAccessRequest[] @relation("HandledBy")
+  acknowledgedMails Mail[]               @relation("AcknowledgedBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Protocols (migrated from index.json + PDFs) ─────────────────────────────
+enum Visibility {
+  PUBLIC
+  INTERNAL
+}
+
+// Lifecycle of a protocol: publicly listed, internal-only, archived (hidden but
+// kept), or soft-deleted (trash).
+enum ProtocolStatus {
+  PUBLIC
+  INTERNAL
+  ARCHIVED
+  DELETED
+}
+
+model Protocol {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  title        String
+  date         DateTime
+  project      String?
+  tags         String[]       @default([])
+  version      Int            @default(1)
+  status       ProtocolStatus @default(PUBLIC)
+  filePath     String // path relative to UPLOADS_DIR, e.g. "protocols/sv-...pdf"
+  originalName String?
+  md5Checksum  String?
+  driveId      String?
+  uploadedById String?
+  uploadedBy   User?          @relation("UploadedBy", fields: [uploadedById], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+// ─── Calendar events (Termine) ───────────────────────────────────────────────
+enum EventSource {
+  MANUAL
+  TERMINE
+  MAIL
+}
+
+model Event {
+  id           String      @id @default(cuid())
+  title        String
+  start        DateTime
+  end          DateTime?
+  lessonSlot   String? // "3.FS"
+  location     String?
+  description  String?
+  visibility   Visibility  @default(PUBLIC)
+  source       EventSource @default(MANUAL)
+  sourceMailId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([start])
+}
+
+// ─── Tasks (migrated from Firestore) ─────────────────────────────────────────
+model Task {
+  id                 String    @id @default(cuid())
+  title              String
+  dueDate            DateTime
+  repetitionInterval String    @default("none")
+  progress           Int       @default(0)
+  completed          Boolean   @default(false)
+  nextDueDate        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([dueDate])
+}
+
+// ─── Role / knowledge base (Schulsprecher, Kassenwart, …) ────────────────────
+model RoleAssignment {
+  id        String   @id @default(cuid())
+  role      String // canonical role name; matched by mail routing
+  name      String
+  email     String?
+  slackId   String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+// ─── Drive folders + access requests ─────────────────────────────────────────
+model DriveFolder {
+  id                  String   @id @default(cuid())
+  name                String
+  driveId             String
+  description         String?
+  isPublicRequestable Boolean  @default(true)
+  createdAt           DateTime @default(now())
+}
+
+model DriveAccessRequest {
+  id            String    @id @default(cuid())
+  email         String
+  requesterRole String? // Elternteil / Lehrer / extern
+  reason        String?
+  status        String    @default("pending") // pending | granted | rejected
+  folderIds     String[]  @default([])
+  handledById   String?
+  handledBy     User?     @relation("HandledBy", fields: [handledById], references: [id])
+  createdAt     DateTime  @default(now())
+  handledAt     DateTime?
+
+  @@index([status])
+}
+
+// ─── Themen-Einreichung (public topic submissions) ───────────────────────────
+model TopicSubmission {
+  id        String   @id @default(cuid())
+  text      String
+  name      String?
+  email     String?
+  status    String   @default("new") // new | planned | done | rejected
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+// ─── Smart mail (every inbound mail tracked; none ignored) ───────────────────
+model Mail {
+  id               String    @id @default(cuid())
+  messageId        String    @unique
+  fromAddr         String
+  fromName         String?
+  subject          String?
+  receivedAt       DateTime
+  bodyText         String?
+  category         String?
+  summary          String?
+  urgency          String?
+  assignedRole     String?
+  assignedEmail    String?
+  status           String    @default("new") // new | notified | acknowledged | done
+  acknowledgedById String?
+  acknowledgedBy   User?     @relation("AcknowledgedBy", fields: [acknowledgedById], references: [id])
+  acknowledgedAt   DateTime?
+  calendarEventId  String?
+  slackTs          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@index([receivedAt])
+}
+
+// ─── Audit log ───────────────────────────────────────────────────────────────
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

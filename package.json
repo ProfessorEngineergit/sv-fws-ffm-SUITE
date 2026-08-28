@@ -1,0 +1,31 @@
+{
+  "name": "sv-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Self-hosted platform for the Schülervertretung der Freien Waldorfschule Frankfurt (Archiv + SV-intern + Admin + Smart Mail).",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @sv/web dev",
+    "web": "pnpm --filter @sv/web dev",
+    "mail-brain": "pnpm --filter @sv/mail-brain dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @sv/db generate",
+    "db:migrate": "pnpm --filter @sv/db migrate",
+    "db:migrate:deploy": "pnpm --filter @sv/db migrate:deploy",
+    "db:seed": "pnpm --filter @sv/db seed",
+    "db:studio": "pnpm --filter @sv/db studio",
+    "db:reset": "pnpm --filter @sv/db reset"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "dotenv-cli": "^7.4.4",
+    "prisma": "^6.3.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

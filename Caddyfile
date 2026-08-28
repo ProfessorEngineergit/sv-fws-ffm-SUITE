@@ -1,0 +1,16 @@
+# Reverse proxy + automatic HTTPS (Let's Encrypt).
+# Root domain  -> SV-FFM static homepage (rsynced to /srv/ffm from GitHub).
+# archiv.<dom> -> the Next.js app (archiv + SV-intern + admin + api).
+
+{$APP_DOMAIN:sv-fwsffm.de} {
+	encode gzip zstd
+	root * /srv/ffm
+	file_server
+	# SPA-style fallback so deep links resolve to the static index.
+	try_files {path} /index.html
+}
+
+archiv.{$APP_DOMAIN:sv-fwsffm.de} {
+	encode gzip zstd
+	reverse_proxy web:3000
+}

@@ -1,0 +1,20 @@
+# TEMPLATE — copy into the SV-Platform repo at .github/workflows/deploy.yml
+# On push to main, SSH into the VPS and run the deploy script (pull + build +
+# migrate + restart). Requires repo secrets VPS_HOST, VPS_USER, VPS_SSH_KEY.
+name: Deploy SV-Platform
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: cd /srv/sv/SV-Platform && ./infra/scripts/deploy.sh

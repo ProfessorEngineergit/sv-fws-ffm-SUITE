@@ -1,0 +1,30 @@
+# TEMPLATE — copy into the SV-FFM repo at .github/workflows/deploy.yml
+# Builds the Vite homepage and rsyncs dist/ to the VPS (/srv/ffm), which Caddy
+# serves at the root domain. Requires vite.config base '/' and repo secrets
+# VPS_HOST, VPS_USER, VPS_SSH_KEY.
+name: Deploy SV-FFM to VPS
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Rsync dist to VPS
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: dist/
+          remote_path: /srv/ffm/
+          remote_host: ${{ secrets.VPS_HOST }}
+          remote_user: ${{ secrets.VPS_USER }}
+          remote_key: ${{ secrets.VPS_SSH_KEY }}

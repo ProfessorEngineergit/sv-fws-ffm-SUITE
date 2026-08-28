@@ -1,0 +1,30 @@
+# Production overrides. Usage on the IONOS VPS:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Caddy terminates TLS (Let's Encrypt) and reverse-proxies to web; Postgres and
+# web are no longer exposed on host ports.
+services:
+  postgres:
+    ports: []
+
+  web:
+    ports: []
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/ffm:/srv/ffm:ro          # SV-FFM static build (rsynced from GitHub)
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

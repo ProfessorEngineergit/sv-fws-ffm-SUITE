@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# secrets
+.env
+.env.local
+.env.*.local
+*.service-account.json
+
+# builds
+dist/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# prisma generated client
+packages/db/generated/
+
+# local uploads / runtime data
+data-uploads/
+uploads/
+
+# logs
+*.log
+npm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db

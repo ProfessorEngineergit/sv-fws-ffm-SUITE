@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SV-Platform design — glass depth (soft shadows + gentle hover-lift) with a
+   genuine Material-3-Expressive shape system: an expressive corner scale,
+   pill buttons that shape-morph on press, and squircle icon tiles that morph
+   to a circle on hover. Navy accent throughout.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* paper / ink */
+  --paper: #fafaf8;
+  --paper-warm: #f6f3ec;
+  --surface: #f5f5f4;
+  --ink: #1c1917;
+  --ink-soft: #44403c;
+  --muted: #78716c;
+  --faint: #a8a29e;
+  --line: #e7e5e4;
+
+  /* navy accent */
+  --accent: #16306b;
+  --accent-deep: #0d1f47;
+  --accent-soft: #2c52c4;
+  --accent-rgb: 22, 48, 107;
+  --accent-soft-rgb: 44, 82, 196;
+  --line-blue: rgba(var(--accent-rgb), 0.16);
+  --line-blue-strong: rgba(var(--accent-rgb), 0.34);
+
+  /* semantic */
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+
+  /* glass + soft ink shadows (the depth) */
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-blur: blur(28px) saturate(1.8);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-soft: 0 8px 40px rgba(28, 25, 23, 0.07), 0 2px 10px rgba(28, 25, 23, 0.04);
+  --shadow-lift: 0 18px 50px rgba(28, 25, 23, 0.12), 0 4px 14px rgba(28, 25, 23, 0.06);
+  --shadow-btn: 0 4px 12px rgba(28, 25, 23, 0.12), 0 2px 4px rgba(28, 25, 23, 0.06);
+  --shadow-btn-hover: 0 10px 28px rgba(28, 25, 23, 0.16), 0 4px 10px rgba(28, 25, 23, 0.08);
+
+  /* Material-3-Expressive corner scale */
+  --radius-xs: 8px;
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
+  --radius-full: 999px;
+
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Courier Prime", ui-monospace, "SFMono-Regular", monospace;
+
+  --header-h: 68px;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgba(var(--accent-rgb), 0.15);
+}
+
+a {
+  color: inherit;
+}
+
+/* ── eyebrow / mono label ─────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── glass surfaces — translucent, blurred, soft shadow, expressive radius ─── */
+.glass,
+.paper-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.glass-heavy {
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(60px) saturate(2);
+  -webkit-backdrop-filter: blur(60px) saturate(2);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Interactive cards: gentle lift + deeper shadow. */
+.paper-card-hover {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.paper-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ── Material-3-Expressive icon tile — squircle that morphs to a circle ────── */
+.icon-tile {
+  display: grid;
+  place-items: center;
+  border-radius: 34%;
+  transition: border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.group:hover .icon-tile,
+.icon-tile:hover {
+  border-radius: 50%;
+}
+
+/* ── buttons — pill by default, SHAPE-MORPH on press (M3 Expressive) ───────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-btn);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.22s ease, background 0.22s ease, color 0.22s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-btn-hover); }
+/* the signature morph: pill squishes into a rounded square while pressed */
+.btn:active { transform: translateY(0) scale(0.96); border-radius: var(--radius-sm); box-shadow: var(--shadow-btn); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-navy { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; }
+.btn-navy:hover { background: linear-gradient(135deg, var(--accent-soft), var(--accent)); }
+.btn-ink { background: var(--ink); color: var(--paper); }
+.btn-ink:hover { background: #000; }
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: var(--line-blue);
+  color: var(--ink);
+  box-shadow: none;
+}
+.btn-ghost:hover { background: #fff; box-shadow: var(--shadow-btn); }
+.btn-danger { background: #fff; border-color: rgba(185, 28, 28, 0.4); color: var(--danger); box-shadow: none; }
+.btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); box-shadow: var(--shadow-btn); }
+.btn-sm { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
+
+/* ── form fields — expressive radius, subtle accent focus glow ─────────────── */
+.field {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.92rem;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(var(--accent-soft-rgb), 0.15);
+}
+.field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 0.35rem;
+}
+
+/* ── badges / pills ───────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+}
+.badge-navy { border-color: var(--line-blue-strong); color: var(--accent); background: rgba(var(--accent-rgb), 0.07); }
+.badge-ok { border-color: rgba(21, 128, 61, 0.3); color: var(--ok); background: rgba(21, 128, 61, 0.07); }
+.badge-warn { border-color: rgba(180, 83, 9, 0.3); color: var(--warn); background: rgba(180, 83, 9, 0.07); }
+.badge-danger { border-color: rgba(185, 28, 28, 0.3); color: var(--danger); background: rgba(185, 28, 28, 0.07); }
+
+/* ── admin shell ──────────────────────────────────────────────────────────── */
+.admin-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+@media (max-width: 860px) {
+  .admin-shell { grid-template-columns: 1fr; }
+  .admin-sidebar { position: sticky; top: 0; z-index: 20; }
+}
+.admin-sidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(246, 243, 236, 0.55));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--line);
+  padding: 1.5rem 1rem;
+}
+.admin-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: background 0.2s, color 0.2s;
+}
+.admin-link:hover { background: rgba(var(--accent-rgb), 0.06); color: var(--accent); }
+.admin-link.active { background: rgba(var(--accent-rgb), 0.1); color: var(--accent); font-weight: 600; }
+
+/* ── sketch animations ────────────────────────────────────────────────────── */
+@keyframes handwriteReveal {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+.handwrite-reveal { animation: handwriteReveal 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards; }
+
+@keyframes fadeDrawIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.fade-draw-in { animation: fadeDrawIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@keyframes pencilDraw {
+  0% { stroke-dashoffset: 240; }
+  100% { stroke-dashoffset: 0; }
+}
+.pencil-line { stroke-dasharray: 240; stroke-dashoffset: 240; animation: pencilDraw 1.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 34px; height: 34px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ── scrollbars ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #b8b4b0; }
+
+.timeline-scroll { scrollbar-width: thin; scrollbar-color: rgba(var(--accent-rgb),0.25) transparent; -webkit-overflow-scrolling: touch; }
+.timeline-line-fade {
+  mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+}
+
+/* ── layout helpers ───────────────────────────────────────────────────────── */
+.container-page { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+.container-narrow { max-width: 760px; margin: 0 auto; padding: 0 24px; }

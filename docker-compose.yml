@@ -1,0 +1,52 @@
+# Local + base compose. For production overrides (Caddy, no host ports) also pass
+#   -f docker-compose.yml -f docker-compose.prod.yml
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sv_local_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-svplatform}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sv} -d ${POSTGRES_DB:-svplatform}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sv}:${POSTGRES_PASSWORD:-sv_local_dev}@postgres:5432/${POSTGRES_DB:-svplatform}?schema=public
+      UPLOADS_DIR: /var/sv/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/var/sv/uploads
+
+  mail-brain:
+    build:
+      context: .
+      dockerfile: apps/mail-brain/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sv}:${POSTGRES_PASSWORD:-sv_local_dev}@postgres:5432/${POSTGRES_DB:-svplatform}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
