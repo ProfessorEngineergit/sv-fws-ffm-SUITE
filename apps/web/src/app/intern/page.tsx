@@ -2,15 +2,14 @@ import Link from "next/link";
 import { CalendarClock, ListTodo, Inbox } from "lucide-react";
 import { prisma } from "@sv/db";
 import { formatDateTimeDE } from "@/lib/format";
-import { getCurrentUser, getCapabilities } from "@/lib/session";
+import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "SV-intern" };
 
 export default async function InternHome() {
   const user = await getCurrentUser();
-  const caps = user ? await getCapabilities(user.id, user.role) : [];
-  const canMails = caps.includes("mails");
+  const canMails = user?.permissions.includes("mails") ?? false;
 
   const [nextEvent, openTasks, openMails] = await Promise.all([
     prisma.event.findFirst({ where: { start: { gte: new Date() } }, orderBy: { start: "asc" } }),

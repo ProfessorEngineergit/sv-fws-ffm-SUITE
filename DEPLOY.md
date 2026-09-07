@@ -97,6 +97,19 @@ _(Alternative: GitHub Pages mit Custom-Domain – dann DNS `@`/`www` als CNAME a
 cd /srv/sv/SV-Platform && ./infra/scripts/deploy.sh
 ```
 
+## Sicherheits-Checkliste vor dem Go-live
+- [ ] `AUTH_SECRET` per `openssl rand -base64 33` erzeugt (kein Platzhalter) –
+      sonst startet die App in Produktion bewusst nicht.
+- [ ] `POSTGRES_PASSWORD` gesetzt und nicht der Beispielwert.
+- [ ] `CALENDAR_FEED_TOKEN` per `openssl rand -hex 32` erzeugt (min. 16 Zeichen),
+      sonst bleibt der interne Kalender-Feed aus.
+- [ ] `ADMIN_EMAILS` enthält nur die Personen, die wirklich Admin sein sollen.
+- [ ] `.env` gehört `root` und ist `chmod 600`.
+- [ ] Prod-Compose benutzt (`-f docker-compose.yml -f docker-compose.prod.yml`),
+      damit weder Postgres noch die App direkt am Host hängen.
+- [ ] `ufw status` zeigt nur SSH/80/443.
+- [ ] Ein Backup wurde einmal testweise mit `restore.sh` zurückgespielt.
+
 ## Checkliste „läuft alles?"
 - [ ] `https://archiv.sv-fwsffm.de/archiv` zeigt Protokolle
 - [ ] Login als Admin funktioniert, `/admin` erreichbar

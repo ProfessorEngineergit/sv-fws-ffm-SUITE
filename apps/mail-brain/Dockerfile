@@ -10,4 +10,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @sv/db generate
 
 ENV NODE_ENV=production
+# The worker only needs to read its own code — run it unprivileged.
+RUN chown -R node:node /app
+USER node
 CMD ["pnpm", "--filter", "@sv/mail-brain", "exec", "tsx", "src/index.ts"]

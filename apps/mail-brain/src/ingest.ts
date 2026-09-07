@@ -19,6 +19,15 @@ export interface IngestResult {
   assignedRole?: string;
 }
 
+// Inbound mail is untrusted input and the AI summary is derived from it, so
+// everything that reaches the database is length-bounded here.
+const MAX_BODY = 100_000;
+const MAX_SUBJECT = 500;
+const MAX_SUMMARY = 2_000;
+const MAX_TITLE = 200;
+
+const cut = (v: string, max: number) => (v.length > max ? v.slice(0, max) : v);
+
 /** The full pipeline for one mail: store → classify → route → calendar → notify. */
 export async function ingestMail(m: IncomingMail): Promise<IngestResult> {
   const existing = await prisma.mail.findUnique({ where: { messageId: m.messageId } });
@@ -27,11 +36,11 @@ export async function ingestMail(m: IncomingMail): Promise<IngestResult> {
   let mail = await prisma.mail.create({
     data: {
       messageId: m.messageId,
-      fromAddr: m.fromAddr,
-      fromName: m.fromName ?? null,
-      subject: m.subject ?? null,
+      fromAddr: cut(m.fromAddr, 320),
+      fromName: m.fromName ? cut(m.fromName, 200) : null,
+      subject: m.subject ? cut(m.subject, MAX_SUBJECT) : null,
       receivedAt: m.receivedAt,
-      bodyText: m.bodyText,
+      bodyText: cut(m.bodyText, MAX_BODY),
       status: "new",
     },
   });
@@ -47,10 +56,10 @@ export async function ingestMail(m: IncomingMail): Promise<IngestResult> {
       try {
         const ev = await prisma.event.create({
           data: {
-            title: cls.event.title,
+            title: cut(cls.event.title, MAX_TITLE) || "Termin aus Mail",
             start,
             end: cls.event.end ? new Date(cls.event.end) : null,
-            location: cls.event.location ?? null,
+            location: cls.event.location ? cut(cls.event.location, 200) : null,
             source: "MAIL",
             sourceMailId: mail.id,
             visibility: "INTERNAL",
@@ -67,7 +76,7 @@ export async function ingestMail(m: IncomingMail): Promise<IngestResult> {
     where: { id: mail.id },
     data: {
       category: cls.category,
-      summary: cls.summary,
+      summary: cut(cls.summary, MAX_SUMMARY),
       urgency: cls.urgency,
       assignedRole: assignee.role,
       assignedEmail: assignee.email,
@@ -84,7 +93,7 @@ export async function ingestMail(m: IncomingMail): Promise<IngestResult> {
     urgency: cls.urgency,
     assignedRole: assignee.role,
     assignedSlackId: assignee.slackId,
-    summary: cls.summary,
+    summary: mail.summary ?? cls.summary,
   });
   if (ts) await prisma.mail.update({ where: { id: mail.id }, data: { slackTs: ts } });
 

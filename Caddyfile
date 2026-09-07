@@ -2,7 +2,19 @@
 # Root domain  -> SV-FFM static homepage (rsynced to /srv/ffm from GitHub).
 # archiv.<dom> -> the Next.js app (archiv + SV-intern + admin + api).
 
+# Baseline headers for both sites; the Next.js app adds its own CSP on top.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+}
+
 {$APP_DOMAIN:sv-fwsffm.de} {
+	import security_headers
 	encode gzip zstd
 	root * /srv/ffm
 	file_server
@@ -11,6 +23,12 @@
 }
 
 archiv.{$APP_DOMAIN:sv-fwsffm.de} {
+	import security_headers
 	encode gzip zstd
+	# Comfortably above the 25 MB protocol upload limit, far below anything
+	# that could exhaust the small VPS.
+	request_body {
+		max_size 30MB
+	}
 	reverse_proxy web:3000
 }

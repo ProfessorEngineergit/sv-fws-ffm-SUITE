@@ -9,7 +9,10 @@ export const authConfig = {
   providers: [Google],
   // Behind the Caddy reverse proxy in prod; in dev the request host is used.
   trustHost: true,
-  session: { strategy: "jwt" },
+  // Short-lived tokens limit how long a stale snapshot can circulate; authority
+  // (role, capabilities, account existence) is re-read from the DB per request
+  // in lib/session.ts, so the JWT only carries identity.
+  session: { strategy: "jwt", maxAge: 12 * 60 * 60, updateAge: 60 * 60 },
   pages: { signIn: "/login" },
   callbacks: {
     jwt({ token, user }) {

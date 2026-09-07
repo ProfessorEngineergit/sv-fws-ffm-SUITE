@@ -1,12 +1,23 @@
+import crypto from "node:crypto";
 import ical from "ical-generator";
 import { prisma } from "@sv/db";
 
 export const dynamic = "force-dynamic";
 
+/** Constant-time comparison that does not leak the expected length. */
+function tokenMatches(provided: string | null): boolean {
+  const expected = process.env.CALENDAR_FEED_TOKEN;
+  // An unset or placeholder token must never unlock the internal feed.
+  if (!expected || expected.length < 16 || expected === "replace-me") return false;
+  if (!provided) return false;
+  const a = crypto.createHash("sha256").update(provided).digest();
+  const b = crypto.createHash("sha256").update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
 // Public iCal feed. Pass ?token=<CALENDAR_FEED_TOKEN> to also include internal events.
 export async function GET(req: Request) {
-  const token = new URL(req.url).searchParams.get("token");
-  const includeInternal = Boolean(token && token === process.env.CALENDAR_FEED_TOKEN);
+  const includeInternal = tokenMatches(new URL(req.url).searchParams.get("token"));
 
   const events = await prisma.event.findMany({
     where: includeInternal ? {} : { visibility: "PUBLIC" },
@@ -34,7 +45,9 @@ export async function GET(req: Request) {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": 'inline; filename="sv-termine.ics"',
-      "Cache-Control": "public, max-age=300",
+      "X-Content-Type-Options": "nosniff",
+      // The token-authenticated variant is per-subscriber, never shared-cacheable.
+      "Cache-Control": includeInternal ? "private, no-store" : "public, max-age=300",
     },
   });
 }

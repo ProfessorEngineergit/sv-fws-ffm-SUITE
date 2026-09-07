@@ -1,7 +1,36 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
 
 export const metadata = { title: "Anmelden" };
+
+/**
+ * Only ever redirect to this site. Auth.js hands us the absolute URL of the
+ * page the user was sent away from, so same-origin absolute URLs are reduced to
+ * their path; anything foreign — another origin, a protocol-relative
+ * "//evil.tld", a backslash variant — falls back to the internal area, so the
+ * login page can never be used as an open redirect.
+ */
+async function safeCallback(url: string | undefined): Promise<string> {
+  const fallback = "/intern";
+  if (!url) return fallback;
+
+  const normalised = url.replace(/\\/g, "/");
+  if (normalised.startsWith("//")) return fallback;
+  if (normalised.startsWith("/")) return normalised;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(normalised);
+  } catch {
+    return fallback;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
+
+  const host = (await headers()).get("host");
+  if (!host || parsed.host !== host) return fallback;
+  return `${parsed.pathname}${parsed.search}` || fallback;
+}
 
 export default async function LoginPage({
   searchParams,
@@ -11,6 +40,7 @@ export default async function LoginPage({
   const session = await auth();
   if (session?.user) redirect("/intern");
   const { callbackUrl } = await searchParams;
+  const redirectTo = await safeCallback(callbackUrl);
 
   return (
     <main className="min-h-screen grid place-items-center px-6">
@@ -24,7 +54,7 @@ export default async function LoginPage({
           className="mt-8"
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: callbackUrl || "/intern" });
+            await signIn("google", { redirectTo });
           }}
         >
           <button type="submit" className="btn btn-navy w-full">
@@ -39,7 +69,7 @@ export default async function LoginPage({
               "use server";
               await signIn("dev", {
                 email: String(fd.get("email") ?? ""),
-                redirectTo: callbackUrl || "/intern",
+                redirectTo,
               });
             }}
           >
