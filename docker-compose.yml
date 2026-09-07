@@ -4,12 +4,16 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-sv}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sv_local_dev}
       POSTGRES_DB: ${POSTGRES_DB:-svplatform}
     ports:
-      - "5432:5432"
+      # Loopback only: the database is reachable from the host for prisma CLI
+      # work, never from the network. Production removes the mapping entirely.
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,6 +27,8 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sv}:${POSTGRES_PASSWORD:-sv_local_dev}@postgres:5432/${POSTGRES_DB:-svplatform}?schema=public
@@ -31,7 +37,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - uploads:/var/sv/uploads
 
@@ -40,6 +46,8 @@ services:
       context: .
       dockerfile: apps/mail-brain/Dockerfile
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sv}:${POSTGRES_PASSWORD:-sv_local_dev}@postgres:5432/${POSTGRES_DB:-svplatform}?schema=public

@@ -40,8 +40,8 @@ pnpm dev                        # http://localhost:3000
 ```
 
 **Ohne Google-Login testen:** Im Dev-Modus bietet `/login` einen „Dev-Login" –
-melde dich mit einer E-Mail aus `ADMIN_EMAILS` an (Standard:
-`bahriannovotny@icloud.com`). Dieser Login existiert in Produktion nicht.
+melde dich mit einer E-Mail aus `ADMIN_EMAILS` an. Dieser Login existiert in
+Produktion nicht.
 
 **Mail-Pipeline testen (ohne Postfach/OpenAI/Slack):**
 
@@ -52,6 +52,35 @@ pnpm --filter @sv/mail-brain test:pipeline
 Zwei Beispiel-Mails werden klassifiziert, geroutet und landen im Posteingang
 (`/intern/mails`) – über einen Schlagwort-Klassifikator, falls kein
 `OPENAI_API_KEY` gesetzt ist.
+
+## Sicherheit
+
+Kurzfassung des Sicherheitsmodells – Details stehen als Kommentare an der
+jeweiligen Stelle im Code:
+
+- **Rechte kommen immer aus der Datenbank.** Die Session ist ein JWT und damit
+  nur eine Momentaufnahme; Rolle, Capabilities und die Existenz des Kontos
+  werden in `apps/web/src/lib/session.ts` bei jedem Request frisch geprüft.
+  Wer heruntergestuft oder gelöscht wird, verliert den Zugriff sofort – ohne
+  auf den Ablauf des Tokens zu warten.
+- **Zwei Ebenen.** `proxy.ts` hält anonyme Zugriffe von `/intern` und `/admin`
+  fern; die eigentliche Autorisierung passiert in jeder Server Action und
+  Route (`assertAdmin` / `assertPermission`), denn Server Actions sind
+  öffentliche HTTP-Endpunkte.
+- **Eingaben werden serverseitig validiert** (zod), auch dort, wo das UI schon
+  einschränkt. Uploads müssen echte PDFs sein (Magic Bytes, max. 25 MB).
+- **Öffentliche Formulare** (Themen, Drive-Zugang) sind ratenbegrenzt, und eine
+  Zugangsanfrage kann nur Ordner nennen, die tatsächlich freigegeben sind.
+- **Nicht-öffentliche Dokumente** (`/api/files/...`) verlangen dieselbe
+  Capability wie die interne Dokumentenseite und werden nie zwischengespeichert.
+- **Externe Inhalte** (Mails, Formulartexte) werden vor dem Rendern in Slack
+  escaped, damit niemand `<!channel>`-Pings oder Fake-Mentions auslösen kann.
+- **Konfiguration:** ohne echtes `AUTH_SECRET` startet die App in Produktion
+  nicht (`instrumentation.ts`). `CALENDAR_FEED_TOKEN` muss mindestens 16 Zeichen
+  haben, sonst bleibt der interne Kalender-Feed deaktiviert.
+- **Container** laufen unprivilegiert (`USER node`, `no-new-privileges`),
+  Postgres ist lokal nur an `127.0.0.1` gebunden und in Produktion gar nicht.
+- **Admin-Aktionen** werden im `AuditLog` protokolliert (wer, was, wann).
 
 ## Nützliche Skripte
 

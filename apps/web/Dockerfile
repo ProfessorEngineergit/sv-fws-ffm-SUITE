@@ -18,5 +18,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Bring over the built app plus its installed dependencies (reliable with the
 # Prisma engine; simpler than pruning the standalone trace).
 COPY --from=build /app ./
+# Run as the unprivileged "node" user that the base image ships with, and give
+# it the uploads mount point so the admin PDF upload keeps working.
+RUN mkdir -p /var/sv/uploads && chown -R node:node /app /var/sv/uploads
+USER node
 EXPOSE 3000
 CMD ["pnpm", "--filter", "@sv/web", "exec", "next", "start"]

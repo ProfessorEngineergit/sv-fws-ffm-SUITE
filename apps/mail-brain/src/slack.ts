@@ -1,6 +1,15 @@
 import { WebClient } from "@slack/web-api";
 import { config } from "./config";
 
+/**
+ * Escape text Slack renders as mrkdwn. Subject, sender and AI summary all
+ * originate from inbound mail, so an attacker could otherwise inject a
+ * "<!channel>" ping or a fake link into every notification.
+ */
+function esc(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 let client: WebClient | null = null;
 function getClient(): WebClient | null {
   if (!config.slackToken) return null;
@@ -24,8 +33,11 @@ export async function notifyMail(n: MailNotice): Promise<string | null> {
   const cl = getClient();
   if (!cl) return null;
   const head = n.escalated ? "⏰ *ESKALATION* – unbearbeitete Mail" : "📨 Neue Mail";
-  const mention = n.assignedSlackId ? ` (<@${n.assignedSlackId}>)` : "";
-  const text = `${head}: ${n.subject ?? "(kein Betreff)"} → ${n.assignedRole}`;
+  // Only a well-formed Slack ID may become a real mention.
+  const slackId = /^[A-Z0-9]{2,32}$/i.test(n.assignedSlackId ?? "") ? n.assignedSlackId : null;
+  const mention = slackId ? ` (<@${slackId}>)` : "";
+  const subject = esc(n.subject ?? "(kein Betreff)");
+  const text = `${head}: ${subject} → ${esc(n.assignedRole)}`;
   try {
     const res = await cl.chat.postMessage({
       channel: config.slackChannel,
@@ -36,13 +48,19 @@ export async function notifyMail(n: MailNotice): Promise<string | null> {
           text: {
             type: "mrkdwn",
             text:
-              `${head}\n\n*${n.subject ?? "(kein Betreff)"}*\n` +
-              `Von: ${n.fromAddr}\n` +
-              `*Kategorie:* ${n.category}  ·  *Dringlichkeit:* ${n.urgency}\n` +
-              `*Zuständig:* ${n.assignedRole}${mention}`,
+              `${head}\n\n*${subject}*\n` +
+              `Von: ${esc(n.fromAddr)}\n` +
+              `*Kategorie:* ${esc(n.category)}  ·  *Dringlichkeit:* ${esc(n.urgency)}\n` +
+              `*Zuständig:* ${esc(n.assignedRole)}${mention}`,
           },
         },
-        { type: "section", text: { type: "mrkdwn", text: n.summary || "_(keine Zusammenfassung)_" } },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: n.summary ? esc(n.summary) : "_(keine Zusammenfassung)_",
+          },
+        },
         {
           type: "actions",
           elements: [

@@ -3,6 +3,14 @@
 import { WebClient } from "@slack/web-api";
 import type { KnownBlock } from "@slack/web-api";
 
+/**
+ * Escape text that Slack renders as mrkdwn. Values coming from public forms
+ * must never be able to produce a mention ("<!channel>", "<@U…>") or a link.
+ */
+export function escapeSlack(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 let client: WebClient | null = null;
 
 function getClient(): WebClient | null {
@@ -37,9 +45,9 @@ export async function notifyDriveAccessRequest(req: {
   requesterRole?: string | null;
   reason?: string | null;
 }): Promise<void> {
-  const role = req.requesterRole ? ` (${req.requesterRole})` : "";
-  const reason = req.reason ? `\n> ${req.reason}` : "";
+  const role = req.requesterRole ? ` (${escapeSlack(req.requesterRole)})` : "";
+  const reason = req.reason ? `\n> ${escapeSlack(req.reason)}` : "";
   await postToInbox(
-    `📁 Neue Zugriffsanfrage auf SV-Dokumente von *${req.email}*${role}.${reason}\nBitte im Admin-Panel unter „Zugang" prüfen.`,
+    `📁 Neue Zugriffsanfrage auf SV-Dokumente von *${escapeSlack(req.email)}*${role}.${reason}\nBitte im Admin-Panel unter „Zugang" prüfen.`,
   );
 }
