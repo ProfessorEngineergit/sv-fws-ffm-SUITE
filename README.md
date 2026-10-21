@@ -93,3 +93,7 @@ jeweiligen Stelle im Code:
 
 > Nichts hiervon wird automatisch deployt. Deployment erfolgt erst nach der
 > IONOS-Registrierung gemäß **[DEPLOY.md](./DEPLOY.md)**.
+
+## Entwicklung und KI-Beteiligung
+
+Die Historie des Hauptbranches enthält ausdrücklich Claude zugeschriebene Beiträge ([Beispiel](https://github.com/ProfessorEngineergit/sv-fws-ffm-SUITE/commit/edcc344dcf284b591ef65c60070c9e1f85ea1d65)). Das belegt KI-Beteiligung an diesen Beiträgen, nicht die Herkunft jeder Zeile oder eine unabhängige Prüfung. Bestehende Autor-, Co-Autoren- und Sitzungsangaben bleiben erhalten.
