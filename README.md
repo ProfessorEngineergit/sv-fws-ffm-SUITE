@@ -1,7 +1,7 @@
 # SV-Platform
 
 Selbst gehostete Plattform der **Schülervertretung der Freien Waldorfschule
-Frankfurt am Main** – ersetzt den bisherigen Google-Drive-Sync, die
+Frankfurt am Main** - ersetzt den bisherigen Google-Drive-Sync, die
 `termine.txt` und die Firestore-Aufgaben durch **eine PostgreSQL-Datenbank** und
 ergänzt Login, Admin-Panel, direkten PDF-Upload, einen geteilten Kalender, einen
 Drive-Freigabe-Flow und ein **smartes Mail-System**.
@@ -17,11 +17,11 @@ Drive-Freigabe-Flow und ein **smartes Mail-System**.
 
 ## Architektur
 
-- **`apps/web`** — Next.js 16 (App Router), Auth.js (Google-OAuth), Tailwind v4.
-- **`apps/mail-brain`** — Node-Worker (imapflow + OpenAI + Slack), läuft eigenständig.
-- **`packages/db`** — Prisma-Schema + Client + Seed (die einzige Datenquelle).
-- **`packages/core`** — geteilte Typen, Termine-Parser, Rollen-Wissensbasis.
-- **`infra`** — Caddy (Auto-HTTPS), Deploy-/Backup-Skripte, CI-Vorlagen.
+- **`apps/web`** - Next.js 16 (App Router), Auth.js (Google-OAuth), Tailwind v4.
+- **`apps/mail-brain`** - Node-Worker (imapflow + OpenAI + Slack), läuft eigenständig.
+- **`packages/db`** - Prisma-Schema + Client + Seed (die einzige Datenquelle).
+- **`packages/core`** - geteilte Typen, Termine-Parser, Rollen-Wissensbasis.
+- **`infra`** - Caddy (Auto-HTTPS), Deploy-/Backup-Skripte, CI-Vorlagen.
 
 Domain-Layout: `sv-fwsffm.de` → SV-FFM-Homepage (statisch), `archiv.sv-fwsffm.de`
 → diese App. Details in **[DEPLOY.md](./DEPLOY.md)**, Kosten in **[COSTS.md](./COSTS.md)**.
@@ -39,7 +39,7 @@ pnpm db:seed                    # vorhandene Protokolle/Termine importieren
 pnpm dev                        # http://localhost:3000
 ```
 
-**Ohne Google-Login testen:** Im Dev-Modus bietet `/login` einen „Dev-Login" –
+**Ohne Google-Login testen:** Im Dev-Modus bietet `/login` einen „Dev-Login" -
 melde dich mit einer E-Mail aus `ADMIN_EMAILS` an. Dieser Login existiert in
 Produktion nicht.
 
@@ -50,18 +50,18 @@ pnpm --filter @sv/mail-brain test:pipeline
 ```
 
 Zwei Beispiel-Mails werden klassifiziert, geroutet und landen im Posteingang
-(`/intern/mails`) – über einen Schlagwort-Klassifikator, falls kein
+(`/intern/mails`) - über einen Schlagwort-Klassifikator, falls kein
 `OPENAI_API_KEY` gesetzt ist.
 
 ## Sicherheit
 
-Kurzfassung des Sicherheitsmodells – Details stehen als Kommentare an der
+Kurzfassung des Sicherheitsmodells - Details stehen als Kommentare an der
 jeweiligen Stelle im Code:
 
 - **Rechte kommen immer aus der Datenbank.** Die Session ist ein JWT und damit
   nur eine Momentaufnahme; Rolle, Capabilities und die Existenz des Kontos
   werden in `apps/web/src/lib/session.ts` bei jedem Request frisch geprüft.
-  Wer heruntergestuft oder gelöscht wird, verliert den Zugriff sofort – ohne
+  Wer heruntergestuft oder gelöscht wird, verliert den Zugriff sofort - ohne
   auf den Ablauf des Tokens zu warten.
 - **Zwei Ebenen.** `proxy.ts` hält anonyme Zugriffe von `/intern` und `/admin`
   fern; die eigentliche Autorisierung passiert in jeder Server Action und
@@ -94,6 +94,6 @@ jeweiligen Stelle im Code:
 > Nichts hiervon wird automatisch deployt. Deployment erfolgt erst nach der
 > IONOS-Registrierung gemäß **[DEPLOY.md](./DEPLOY.md)**.
 
-## Entwicklung und KI-Beteiligung
+## KI-Beteiligung
 
-Die Historie des Hauptbranches enthält ausdrücklich Claude zugeschriebene Beiträge ([Beispiel](https://github.com/ProfessorEngineergit/sv-fws-ffm-SUITE/commit/edcc344dcf284b591ef65c60070c9e1f85ea1d65)). Das belegt KI-Beteiligung an diesen Beiträgen, nicht die Herkunft jeder Zeile oder eine unabhängige Prüfung. Bestehende Autor-, Co-Autoren- und Sitzungsangaben bleiben erhalten.
+Einzelne Code-Beiträge sind ausdrücklich KI-Tools zugeschrieben: [generated with Claude Code](https://github.com/ProfessorEngineergit/sv-fws-ffm-SUITE/commit/c41929ae61fc842eb4096218fe4694167b735a88). Das gilt für diese Beiträge, nicht pauschal für alle Dateien.
